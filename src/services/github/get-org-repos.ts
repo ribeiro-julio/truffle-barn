@@ -1,12 +1,14 @@
-import type { GitHubRepo } from '../../types'
+import * as types from '../../types'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const PER_PAGE = 100
 
-export const getRepos = async (org: string): Promise<GitHubRepo[]> => {
-  if (!GITHUB_TOKEN) throw new Error('Missing GITHUB_TOKEN env variable!')
+export const getOrgRepos = async (org: string): Promise<types.GitHubRepo[]> => {
+  if (!GITHUB_TOKEN) {
+    throw new Error('Missing GITHUB_TOKEN env variable!')
+  }
 
-  let repos: GitHubRepo[] = []
+  let repos: types.GitHubRepo[] = []
 
   let page = 1
   for (;;) {
@@ -28,26 +30,25 @@ export const getRepos = async (org: string): Promise<GitHubRepo[]> => {
     if (response.status !== 200) {
       const error = (await response.json()) as { message: string }
       throw new Error(
-        `Failed to get GitHub repositories for organization ${org}: ${error.message}`
+        `Failed to get GitHub repos for org ${org}: ${error.message}`
       )
     }
 
-    const data = (await response.json()) as {
-      archived: boolean
-      name: string
-      visibility: 'private' | 'public'
-    }[]
+    const data = (await response.json()) as types.GitHubOrgsReposResponse[]
 
     repos = [
       ...repos,
       ...data.map(({ archived, name, visibility }) => ({
         archived,
+        owner: org,
         name,
         visibility
       }))
     ]
 
-    if (data.length !== PER_PAGE) break
+    if (data.length !== PER_PAGE) {
+      break
+    }
 
     page += 1
   }

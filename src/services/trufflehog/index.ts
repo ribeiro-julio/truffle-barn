@@ -1,1 +1,1 @@
-export { getRepoSecrets } from './scan-repo'
+export { scanRepo } from './scan-repo'
