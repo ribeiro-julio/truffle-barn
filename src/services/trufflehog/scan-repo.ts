@@ -1,26 +1,26 @@
 import { $, ShellError } from 'bun'
 
+import { env } from '../../env'
 import * as types from '../../types'
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN
-const TRUFFLEHOG_PATH = './binaries/trufflehog'
-
 export const scanRepo = async (
-  owner: string,
-  repo: string
+  repo: types.GitHubRepo
 ): Promise<types.Secret[]> => {
-  if (!GITHUB_TOKEN) {
+  if (!env.GITHUB_TOKEN) {
     throw new Error('Missing GITHUB_TOKEN env variable!')
   }
 
-  if (!Bun.file(TRUFFLEHOG_PATH).exists()) {
+  if (!env.TRUFFLEHOG_PATH) {
+    throw new Error('Missing TRUFFLEHOG_PATH env variable!')
+  }
+
+  if (!Bun.file(env.TRUFFLEHOG_PATH).exists()) {
     throw new Error('Missing TruffleHog binary!')
   }
 
   try {
-    // TODO: add --only-verified after --json
     const command =
-      await $`${TRUFFLEHOG_PATH} github --json --no-update --force-skip-binaries --repo=https://github.com/${owner}/${repo} --token=${GITHUB_TOKEN}`.quiet()
+      await $`${env.TRUFFLEHOG_PATH} github --json --only-verified --no-update --force-skip-binaries --repo=https://github.com/${repo.owner}/${repo.name} --token=${env.GITHUB_TOKEN}`.quiet()
 
     const output = command.stdout.toString().trim()
 
@@ -40,12 +40,11 @@ export const scanRepo = async (
           Raw,
           RawV2
         }) => ({
-          secret: RawV2 ?? Raw,
+          value: RawV2 !== '' ? RawV2 : Raw,
           detector: DetectorName,
-          repoOwner: owner,
-          repoName: repo,
+          repo,
           commit,
-          link
+          url: link
         })
       )
     }
@@ -57,7 +56,7 @@ export const scanRepo = async (
       message = error.stdout.toString()
     }
     throw new Error(
-      `Failed to run TruffleHog on repo ${owner}/${repo}: ${message}`
+      `Failed to run TruffleHog on repo ${repo.owner}/${repo.name}: ${message}`
     )
   }
 }

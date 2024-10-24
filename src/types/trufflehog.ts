@@ -1,3 +1,5 @@
+import type { GitHubRepo } from './github'
+
 export type TruffleHogScanResult = {
   SourceMetadata: {
     Data: { Github: { link: string; commit: string } }
@@ -8,10 +10,9 @@ export type TruffleHogScanResult = {
 }
 
 export type Secret = {
-  secret: string
+  value: string
   detector: string
-  repoOwner: string
-  repoName: string
+  repo: GitHubRepo
   commit: string
-  link: string
+  url: string
 }

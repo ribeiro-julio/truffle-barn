@@ -1,10 +1,13 @@
+import { eq } from 'drizzle-orm'
+
+import { db, schema } from '../../db'
+import { env } from '../../env'
 import * as types from '../../types'
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const PER_PAGE = 100
 
 export const getOrgRepos = async (org: string): Promise<types.GitHubRepo[]> => {
-  if (!GITHUB_TOKEN) {
+  if (!env.GITHUB_TOKEN) {
     throw new Error('Missing GITHUB_TOKEN env variable!')
   }
 
@@ -22,7 +25,7 @@ export const getOrgRepos = async (org: string): Promise<types.GitHubRepo[]> => {
       {
         headers: {
           Accept: 'application/vnd.github+json',
-          Authorization: `Bearer ${GITHUB_TOKEN}`
+          Authorization: `Bearer ${env.GITHUB_TOKEN}`
         }
       }
     )
@@ -51,6 +54,16 @@ export const getOrgRepos = async (org: string): Promise<types.GitHubRepo[]> => {
     }
 
     page += 1
+  }
+
+  const dbRepos = await db.query.repo.findMany({
+    where: eq(schema.repo.owner, org)
+  })
+  const reposToAdd = repos.filter(
+    r => !dbRepos.find(dbr => dbr.name === r.name)
+  )
+  if (reposToAdd.length) {
+    await db.insert(schema.repo).values(reposToAdd)
   }
 
   return repos

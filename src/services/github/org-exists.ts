@@ -1,14 +1,14 @@
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN
+import { env } from '../../env'
 
 export const orgExists = async (org: string): Promise<boolean> => {
-  if (!GITHUB_TOKEN) {
+  if (!env.GITHUB_TOKEN) {
     throw new Error('Missing GITHUB_TOKEN env variable!')
   }
 
   const response = await fetch(`https://api.github.com/orgs/${org}`, {
     headers: {
       Accept: 'application/vnd.github+json',
-      Authorization: `Bearer ${GITHUB_TOKEN}`
+      Authorization: `Bearer ${env.GITHUB_TOKEN}`
     }
   })
 
