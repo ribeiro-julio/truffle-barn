@@ -5,8 +5,8 @@ export type GitHubOrgsReposResponse = {
 }
 
 export type GitHubRepo = {
-  archived: boolean
   owner: string
   name: string
+  archived: boolean
   visibility: 'private' | 'public'
 }

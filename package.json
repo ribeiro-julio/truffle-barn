@@ -2,10 +2,21 @@
   "name": "truffle-barn",
   "module": "src/index.ts",
   "type": "module",
+  "scripts": {
+    "migrations:apply": "drizzle-kit migrate",
+    "migrations:generate": "drizzle-kit generate",
+    "start": "bun ./src/index.ts"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.26.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.35.3",
+    "pg": "^8.13.1"
   }
 }

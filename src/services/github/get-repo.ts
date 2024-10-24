@@ -1,12 +1,14 @@
-import * as types from '../../types'
+import { and, eq } from 'drizzle-orm'
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN
+import { db, schema } from '../../db'
+import { env } from '../../env'
+import * as types from '../../types'
 
 export const getRepo = async (
   owner: string,
   repo: string
 ): Promise<types.GitHubRepo | null> => {
-  if (!GITHUB_TOKEN) {
+  if (!env.GITHUB_TOKEN) {
     throw new Error('Missing GITHUB_TOKEN env variable!')
   }
 
@@ -15,7 +17,7 @@ export const getRepo = async (
     {
       headers: {
         Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${GITHUB_TOKEN}`
+        Authorization: `Bearer ${env.GITHUB_TOKEN}`
       }
     }
   )
@@ -33,6 +35,14 @@ export const getRepo = async (
 
   const { archived, name, visibility } =
     (await response.json()) as types.GitHubOrgsReposResponse
+
+  if (
+    !(await db.query.repo.findFirst({
+      where: and(eq(schema.repo.owner, owner), eq(schema.repo.name, name))
+    }))
+  ) {
+    await db.insert(schema.repo).values([{ archived, owner, name, visibility }])
+  }
 
   return { archived, owner, name, visibility }
 }
